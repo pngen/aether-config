@@ -120,3 +120,7 @@ Authentication is handled through JWT tokens with:
 ## License
 
 MIT License
+
+## Author
+
+Paul Ngen
