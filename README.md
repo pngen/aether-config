@@ -71,6 +71,54 @@ pytest -v
 
 ## Architecture
 
+```markdown
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   FastAPI API   │    │  Consensus Node │    │ Storage Backend │
+│   (Admin)       │◄──►│                 │◄──►│                 │
+│                 │    │                 │    │                 │
+│  JWT Auth       │    │  Raft Protocol  │    │  In-Mem/Redis/  │
+│  CRUD Ops       │    │  Leader/Follower│    │  Postgres       │
+└─────────────────┘    │  Election       │    │                 │
+                       │  Heartbeats     │    └─────────────────┘
+                       │  Config Propose │         ▲
+                       └─────────────────┘         │
+                              ▲                    │
+                              │                    │
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │   Config Manager│    │   Hot-Reload    │
+                       │                 │◄──►│   Watchers      │
+                       │  Versioning     │    │                 │
+                       │  Validation     │    └─────────────────┘
+                       │  Change Notify  │         ▲
+                       └─────────────────┘         │
+                              ▲                    │
+                              │                    │
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │   Configuration │    │   Client Apps   │
+                       │   Schema        │◄──►│                 │
+                       │  (Pydantic v2)  │    │  Service Apps   │
+                       └─────────────────┘    └─────────────────┘
+```
+
+## Component Interactions
+
+1. **API Layer** - FastAPI handles HTTP requests with JWT authentication
+2. **Consensus Layer** - Raft-like protocol manages distributed coordination
+3. **Storage Layer** - Pluggable backends for configuration persistence
+4. **Manager Layer** - ConfigManager orchestrates versioning and validation
+5. **Watcher Layer** - Hot-reload mechanisms notify dependent services
+6. **Client Layer** - Service applications consume configurations
+
+## Data Flow
+
+1. Client sends HTTP request to FastAPI API
+2. API validates JWT token and routes to appropriate handler
+3. ConfigManager processes configuration operations
+4. ConsensusNode ensures consistency across cluster
+5. StorageBackend persists/retrieves configurations
+6. Watchers notify dependent services of changes
+7. Clients receive updated configurations via hot-reload
+
 ### Core Modules
 1. **core.py** - Configuration schemas and manager
 2. **consensus.py** - Simplified Raft consensus implementation
